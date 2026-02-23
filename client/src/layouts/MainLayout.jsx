@@ -155,18 +155,18 @@ const MainLayout = () => {
                             ) : (
                                 <div className="max-h-[400px] overflow-y-auto space-y-4 mb-4 scrollbar-thin">
                                     {cartItems.map(item => (
-                                        <div key={item.id} className="flex gap-4 p-2 hover:bg-slate-50 rounded-2xl transition-colors group">
+                                        <div key={item._id} className="flex gap-4 p-2 hover:bg-slate-50 rounded-2xl transition-colors group">
                                             <img src={item.image} className="w-16 h-16 rounded-xl object-cover" />
                                             <div className="flex-grow">
                                                 <p className="font-bold text-slate-800 text-sm line-clamp-1">{item.name}</p>
                                                 <p className="text-primary-600 font-black text-sm">฿{(Number(item.price) || 0).toLocaleString()}</p>
                                                 <div className="flex items-center gap-2 mt-1">
-                                                    <button onClick={() => updateQuantity(item.id, (item.quantity || 0) - 1)} className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center font-bold">-</button>
+                                                    <button onClick={() => updateQuantity(item._id, (item.quantity || 0) - 1)} className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center font-bold">-</button>
                                                     <span className="text-xs font-black">{item.quantity || 0}</span>
-                                                    <button onClick={() => updateQuantity(item.id, (item.quantity || 0) + 1)} className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center font-bold">+</button>
+                                                    <button onClick={() => updateQuantity(item._id, (item.quantity || 0) + 1)} className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center font-bold">+</button>
                                                 </div>
                                             </div>
-                                            <IconButton onClick={() => removeFromCart(item.id)} size="small" className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <IconButton onClick={() => removeFromCart(item._id)} size="small" className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <Trash2 size={16} />
                                             </IconButton>
                                         </div>

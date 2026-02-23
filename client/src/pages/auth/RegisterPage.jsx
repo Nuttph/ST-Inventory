@@ -15,6 +15,7 @@ import {
 import { User, Mail, Lock, UserPlus, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
+import authApi from '../../api/authApi';
 
 const schema = z.object({
     fullName: z.string().min(2, 'Full name is too short'),
@@ -43,15 +44,19 @@ const RegisterPage = () => {
     const onSubmit = async (data) => {
         setError('');
         try {
-            login({
-                id: '2',
+            const response = await authApi.register({
                 name: data.fullName,
                 email: data.email,
-                role: 'customer'
+                password: data.password,
+                role: 'member' // Default role for registration
             });
-            navigate('/');
+
+            if (response.data) {
+                login(response.data);
+                navigate('/');
+            }
         } catch (err) {
-            setError('Registration failed. Please try again.');
+            setError(err.response?.data?.message || 'Registration failed. Please try again.');
         }
     };
 

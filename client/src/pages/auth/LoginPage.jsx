@@ -17,7 +17,7 @@ import {
 import { Mail, Lock, Eye, EyeOff, LogIn, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
-import axiosInstance from '../../api/axiosInstance';
+import authApi from '../../api/authApi';
 
 const schema = z.object({
     email: z.string().email('Invalid email address'),
@@ -41,13 +41,15 @@ const LoginPage = () => {
     const onSubmit = async (data) => {
         setError('');
         try {
-            const response = await axiosInstance.post('/auth/login', {
+            const response = await authApi.login({
                 email: data.email,
                 password: data.password
             });
 
-            if (response.data.token && response.data.user) {
-                login(response.data.user, response.data.token);
+            if (response.data && response.data.token) {
+                // The API returns user info and token in the same object
+                const { token, ...user } = response.data;
+                login(user, token);
                 navigate('/');
             } else {
                 setError('Invalid server response.');

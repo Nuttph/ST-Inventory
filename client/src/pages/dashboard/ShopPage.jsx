@@ -20,9 +20,11 @@ import {
 import { Search, ShoppingCart, Filter, Eye, Heart, Star, Check, Plus, Minus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../../context/CartContext';
-import mockProducts from '../../data/products.json';
+import productApi from '../../api/productApi';
 
 const ShopPage = () => {
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [selectedProduct, setSelectedProduct] = useState(null);
@@ -30,15 +32,29 @@ const ShopPage = () => {
     const [quantities, setQuantities] = useState({});
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [addedItemName, setAddedItemName] = useState('');
-    // track which product(s) are currently being added so we can disable
-    // the button and avoid race conditions when the user clicks repeatedly
     const [addingIds, setAddingIds] = useState(new Set());
 
     const { addToCart } = useCart();
 
-    const categories = ['All', ...new Set(mockProducts.map(p => p.category))];
+    const fetchProducts = async () => {
+        setLoading(true);
+        try {
+            const response = await productApi.getProducts();
+            setProducts(response.data);
+        } catch (error) {
+            console.error('Error fetching products:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    const filteredProducts = mockProducts.filter(p => {
+    React.useEffect(() => {
+        fetchProducts();
+    }, []);
+
+    const categories = ['All', ...new Set(products.map(p => p.category))];
+
+    const filteredProducts = products.filter(p => {
         const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
         return matchesSearch && matchesCategory;
@@ -61,11 +77,11 @@ const ShopPage = () => {
     const handleAdd = (product) => {
         if (!product) return;
         // avoid double-work if already in progress
-        if (addingIds.has(product.id)) return;
-        setAddingIds(prev => new Set(prev).add(product.id));
+        if (addingIds.has(product._id)) return;
+        setAddingIds(prev => new Set(prev).add(product._id));
 
         // don't allow user to add more than stock
-        const qty = Math.min(quantities[product.id] || 1, product.stock || 1);
+        const qty = Math.min(quantities[product._id] || 1, product.stock || 1);
 
         try {
             if (!addToCart) {
@@ -74,14 +90,14 @@ const ShopPage = () => {
             addToCart(product, qty);
             setAddedItemName(`${product.name} (${qty} item${qty > 1 ? 's' : ''})`);
             setSnackbarOpen(true);
-            setQuantities(prev => ({ ...prev, [product.id]: 1 }));
+            setQuantities(prev => ({ ...prev, [product._id]: 1 }));
         } catch (err) {
             console.error('failed to add to cart', err);
             alert('ไม่สามารถเพิ่มสินค้าในตะกร้าได้ กรุณาลองอีกครั้ง');
         } finally {
             setAddingIds(prev => {
                 const next = new Set(prev);
-                next.delete(product.id);
+                next.delete(product._id);
                 return next;
             });
         }
@@ -142,104 +158,109 @@ const ShopPage = () => {
 
             {/* Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
-                <AnimatePresence mode="popLayout">
-                    {filteredProducts.map((product, index) => (
-                        <motion.div
-                            key={product.id}
-                            layout
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.8, opacity: 0 }}
-                            transition={{ duration: 0.4, delay: index * 0.05 }}
-                        >
-                            <Card className="group h-full flex flex-col rounded-[3rem] border-none shadow-[0_20px_50px_-20px_rgba(0,0,0,0.1)] hover:shadow-[0_30px_70px_-20px_rgba(37,99,235,0.2)] overflow-hidden transition-all duration-700 bg-white">
-                                <div className="relative aspect-[1/1] overflow-hidden">
-                                    <img src={product.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
-                                    <div className="absolute top-6 left-6">
-                                        <Chip label={product.category} size="small" className="bg-white/90 backdrop-blur font-black text-[10px] uppercase text-primary-700 px-3 py-4" />
-                                    </div>
-                                    <IconButton onClick={(e) => toggleLike(e, product.id)} className="absolute top-6 right-6 bg-white/90 backdrop-blur hover:bg-white shadow-lg transition-all">
-                                        <Heart size={20} className={likedProducts.has(product.id) ? 'fill-red-500 text-red-500' : 'text-slate-400'} />
-                                    </IconButton>
-
-                                    {/* Quick View Button */}
-                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/5">
-                                        <Button
-                                            variant="contained"
-                                            onClick={() => setSelectedProduct(product)}
-                                            className="bg-white/90 backdrop-blur text-slate-900 font-black rounded-2xl px-6 py-2.5 shadow-xl"
-                                            startIcon={<Eye size={20} />}
-                                        >
-                                            Quick View
-                                        </Button>
-                                    </div>
-                                </div>
-
-                                <CardContent className="p-8 flex flex-col flex-grow">
-                                    <div className="flex items-center gap-1 mb-3">
-                                        <Star size={14} className="text-yellow-400 fill-yellow-400" />
-                                        <span className="text-sm font-black text-slate-700">{product.rating}</span>
-                                        <span className="text-xs text-slate-300 ml-1">({product.reviews})</span>
-                                    </div>
-
-                                    <Typography variant="h6" className="font-black text-slate-800 leading-tight mb-2 group-hover:text-primary-600 transition-colors line-clamp-2 min-h-[3rem]">
-                                        {product.name}
-                                    </Typography>
-
-                                    <div className="mt-auto">
-                                        <div className="flex items-end justify-between mb-6">
-                                            <div>
-                                                <span className="text-[10px] font-black text-slate-300 uppercase block tracking-[0.2em] mb-1">Total Price</span>
-                                                <span className="text-2xl font-black text-slate-900 tracking-tighter">฿{product.price.toLocaleString()}</span>
-                                            </div>
-                                            <div className="text-right">
-                                                <span className="text-[10px] font-black text-slate-300 uppercase block mb-1">Stock</span>
-                                                <span className={`text-sm font-black ${product.stock < 10 ? 'text-orange-500' : 'text-green-500'}`}>{product.stock} pcs</span>
-                                            </div>
+                {loading ? (
+                    <div className="col-span-full py-20 text-center">
+                        <Typography variant="h5" className="text-slate-400 font-black italic">Loading Products...</Typography>
+                    </div>
+                ) : (
+                    <AnimatePresence mode="popLayout">
+                        {filteredProducts.map((product, index) => (
+                            <motion.div
+                                key={product._id}
+                                layout
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.8, opacity: 0 }}
+                                transition={{ duration: 0.4, delay: index * 0.05 }}
+                            >
+                                <Card className="group h-full flex flex-col rounded-[3rem] border-none shadow-[0_20px_50px_-20px_rgba(0,0,0,0.1)] hover:shadow-[0_30px_70px_-20px_rgba(37,99,235,0.2)] overflow-hidden transition-all duration-700 bg-white">
+                                    <div className="relative aspect-[1/1] overflow-hidden">
+                                        <img src={product.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+                                        <div className="absolute top-6 left-6">
+                                            <Chip label={product.category} size="small" className="bg-white/90 backdrop-blur font-black text-[10px] uppercase text-primary-700 px-3 py-4" />
                                         </div>
+                                        <IconButton onClick={(e) => toggleLike(e, product._id)} className="absolute top-6 right-6 bg-white/90 backdrop-blur hover:bg-white shadow-lg transition-all">
+                                            <Heart size={20} className={likedProducts.has(product._id) ? 'fill-red-500 text-red-500' : 'text-slate-400'} />
+                                        </IconButton>
 
-                                        {/* Quantity Selector & Add Button */}
-                                        <div className="flex gap-3 items-center">
-                                            <div className="flex items-center bg-slate-50 rounded-2xl p-1 border border-slate-100 flex-1">
-                                                <IconButton
-                                                    size="small"
-                                                    disabled={product.stock <= 0 || addingIds.has(product.id)}
-                                                    onClick={(e) => { e.stopPropagation(); handleQuantityChange(product.id, -1, product.stock); }}
-                                                    className="text-slate-400 hover:text-primary-600"
-                                                >
-                                                    <Minus size={16} />
-                                                </IconButton>
-                                                <span className="flex-1 text-center font-black text-slate-700 text-sm">
-                                                    {quantities[product.id] || 1}
-                                                </span>
-                                                <IconButton
-                                                    size="small"
-                                                    disabled={product.stock <= 0 || addingIds.has(product.id)}
-                                                    onClick={(e) => { e.stopPropagation(); handleQuantityChange(product.id, 1, product.stock); }}
-                                                    className="text-slate-400 hover:text-primary-600"
-                                                >
-                                                    <Plus size={16} />
-                                                </IconButton>
-                                            </div>
-                                            <IconButton
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleAdd(product);
-                                                }}
-                                                disabled={addingIds.has(product.id) || product.stock <= 0}
-                                                className={`bg-primary-600 hover:bg-primary-700 text-white p-4 rounded-2xl shadow-lg shadow-primary-200 transition-all hover:-translate-y-1 active:scale-95 ${
-                                                    addingIds.has(product.id) || product.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''
-                                                }`}
+                                        {/* Quick View Button */}
+                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/5">
+                                            <Button
+                                                variant="contained"
+                                                onClick={() => setSelectedProduct(product)}
+                                                className="bg-white/90 backdrop-blur text-slate-900 font-black rounded-2xl px-6 py-2.5 shadow-xl"
+                                                startIcon={<Eye size={20} />}
                                             >
-                                                {product.stock <= 0 ? 'หมด' : <ShoppingCart size={22} />}
-                                            </IconButton>
+                                                Quick View
+                                            </Button>
                                         </div>
                                     </div>
-                                </CardContent>
-                            </Card>
-                        </motion.div>
-                    ))}
-                </AnimatePresence>
+
+                                    <CardContent className="p-8 flex flex-col flex-grow">
+                                        <div className="flex items-center gap-1 mb-3">
+                                            <Star size={14} className="text-yellow-400 fill-yellow-400" />
+                                            <span className="text-sm font-black text-slate-700">{product.rating}</span>
+                                            <span className="text-xs text-slate-300 ml-1">({product.reviews})</span>
+                                        </div>
+
+                                        <Typography variant="h6" className="font-black text-slate-800 leading-tight mb-2 group-hover:text-primary-600 transition-colors line-clamp-2 min-h-[3rem]">
+                                            {product.name}
+                                        </Typography>
+
+                                        <div className="mt-auto">
+                                            <div className="flex items-end justify-between mb-6">
+                                                <div>
+                                                    <span className="text-[10px] font-black text-slate-300 uppercase block tracking-[0.2em] mb-1">Total Price</span>
+                                                    <span className="text-2xl font-black text-slate-900 tracking-tighter">฿{product.price.toLocaleString()}</span>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="text-[10px] font-black text-slate-300 uppercase block mb-1">Stock</span>
+                                                    <span className={`text-sm font-black ${product.stock < 10 ? 'text-orange-500' : 'text-green-500'}`}>{product.stock} pcs</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Quantity Selector & Add Button */}
+                                            <div className="flex gap-3 items-center">
+                                                <div className="flex items-center bg-slate-50 rounded-2xl p-1 border border-slate-100 flex-1">
+                                                    <IconButton
+                                                        size="small"
+                                                        disabled={product.stock <= 0 || addingIds.has(product._id)}
+                                                        onClick={(e) => { e.stopPropagation(); handleQuantityChange(product._id, -1, product.stock); }}
+                                                        className="text-slate-400 hover:text-primary-600"
+                                                    >
+                                                        <Minus size={16} />
+                                                    </IconButton>
+                                                    <span className="flex-1 text-center font-black text-slate-700 text-sm">
+                                                        {quantities[product._id] || 1}
+                                                    </span>
+                                                    <IconButton
+                                                        size="small"
+                                                        disabled={product.stock <= 0 || addingIds.has(product._id)}
+                                                        onClick={(e) => { e.stopPropagation(); handleQuantityChange(product._id, 1, product.stock); }}
+                                                        className="text-slate-400 hover:text-primary-600"
+                                                    >
+                                                        <Plus size={16} />
+                                                    </IconButton>
+                                                </div>
+                                                <IconButton
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleAdd(product);
+                                                    }}
+                                                    disabled={addingIds.has(product._id) || product.stock <= 0}
+                                                    className={`bg-primary-600 hover:bg-primary-700 text-white p-4 rounded-2xl shadow-lg shadow-primary-200 transition-all hover:-translate-y-1 active:scale-95 ${addingIds.has(product._id) || product.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''
+                                                        }`}
+                                                >
+                                                    {product.stock <= 0 ? 'หมด' : <ShoppingCart size={22} />}
+                                                </IconButton>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        ))}
+                    </AnimatePresence>
+                )}
             </div>
 
             {/* Snackbar Feedback */}
@@ -288,13 +309,12 @@ const ShopPage = () => {
                                         handleAdd(selectedProduct);
                                         setSelectedProduct(null);
                                     }}
-                                    disabled={selectedProduct && (addingIds.has(selectedProduct.id) || selectedProduct.stock === 0)}
-                                    className={`bg-primary-600 hover:bg-primary-700 py-4 rounded-3xl font-black text-lg shadow-xl shadow-primary-100 ${
-                                        selectedProduct && (addingIds.has(selectedProduct.id) || selectedProduct.stock === 0) ? 'opacity-50 cursor-not-allowed' : ''
-                                    }`}
+                                    disabled={selectedProduct && (addingIds.has(selectedProduct._id) || selectedProduct.stock === 0)}
+                                    className={`bg-primary-600 hover:bg-primary-700 py-4 rounded-3xl font-black text-lg shadow-xl shadow-primary-100 ${selectedProduct && (addingIds.has(selectedProduct._id) || selectedProduct.stock === 0) ? 'opacity-50 cursor-not-allowed' : ''
+                                        }`}
                                     startIcon={<ShoppingCart size={22} />}
                                 >
-                                    {selectedProduct && (addingIds.has(selectedProduct.id) ? 'Adding...' : 'Add To Cart')}
+                                    {selectedProduct && (addingIds.has(selectedProduct._id) ? 'Adding...' : 'Add To Cart')}
                                 </Button>
                                 <IconButton className="bg-slate-50 p-4 rounded-3xl border border-slate-100">
                                     <Heart size={24} className="text-slate-400" />

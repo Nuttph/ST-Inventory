@@ -24,18 +24,18 @@ export const CartProvider = ({ children }) => {
     }, [cartItems]);
 
     const addToCart = (product, quantity = 1) => {
-        if (!product || !product.id) return;
+        if (!product || !product._id) return;
 
         const qty = Number(quantity) || 1;
 
         setCartItems(prev => {
             // Ensure prev is always an array
             const currentItems = Array.isArray(prev) ? prev : [];
-            const existingItem = currentItems.find(item => item.id === product.id);
+            const existingItem = currentItems.find(item => item._id === product._id);
 
             if (existingItem) {
                 return currentItems.map(item =>
-                    item.id === product.id
+                    item._id === product._id
                         ? { ...item, quantity: (item.quantity || 0) + qty }
                         : item
                 );
@@ -45,7 +45,7 @@ export const CartProvider = ({ children }) => {
     };
 
     const removeFromCart = (productId) => {
-        setCartItems(prev => (Array.isArray(prev) ? prev : []).filter(item => item.id !== productId));
+        setCartItems(prev => (Array.isArray(prev) ? prev : []).filter(item => item._id !== productId));
     };
 
     const updateQuantity = (productId, quantity) => {
@@ -55,7 +55,7 @@ export const CartProvider = ({ children }) => {
             return;
         }
         setCartItems(prev => (Array.isArray(prev) ? prev : []).map(item =>
-            item.id === productId ? { ...item, quantity: qty } : item
+            item._id === productId ? { ...item, quantity: qty } : item
         ));
     };
 

@@ -6,6 +6,11 @@ const orderSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
     customer: {
         type: String,
         required: true
@@ -18,6 +23,15 @@ const orderSchema = new mongoose.Schema({
         type: String,
         enum: ['pending', 'approved', 'paid', 'packing', 'shipped', 'cancelled'],
         default: 'pending'
+    },
+    paymentMethod: {
+        type: String,
+        enum: ['qr', 'card', 'cod'],
+        required: true
+    },
+    payment: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Payment'
     },
     date: {
         type: Date,

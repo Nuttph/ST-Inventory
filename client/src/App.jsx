@@ -19,6 +19,7 @@ import OrderManagementPage from './pages/orders/OrderManagementPage';
 import InventoryPage from './pages/inventory/InventoryPage';
 import UserManagementPage from './pages/admin/UserManagementPage';
 import PaymentPage from './pages/orders/PaymentPage';
+import CustomerOrdersPage from './pages/orders/CustomerOrdersPage';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
@@ -108,7 +109,7 @@ function App() {
                   } />
 
                   <Route path="/payment" element={<PaymentPage />} />
-                  <Route path="/orders" element={<div>Customer Orders View (Coming Soon)</div>} />
+                  <Route path="/orders" element={<CustomerOrdersPage />} />
                 </Route>
 
                 {/* Fallback */}

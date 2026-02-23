@@ -27,28 +27,43 @@ import {
     ArrowUpRight,
     Package
 } from 'lucide-react';
-
-const mockInventory = [
-    { id: 1, name: 'Premium Coffee Beans', stock: 15, minStock: 20, price: 250, category: 'Food' },
-    { id: 2, name: 'Wireless Headphones', stock: 8, minStock: 5, price: 1500, category: 'Electronics' },
-    { id: 3, name: 'Minimalist Watch', stock: 3, minStock: 10, price: 3200, category: 'Fashion' },
-    { id: 4, name: 'Smart Plant Pot', stock: 45, minStock: 15, price: 850, category: 'Home' },
-    { id: 5, name: 'Leather Journal', stock: 12, minStock: 10, price: 450, category: 'Stationery' },
-];
+import productApi from '../../api/productApi';
 
 const InventoryPage = () => {
-    const [items, setItems] = useState(mockInventory);
+    const [items, setItems] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [restockItem, setRestockItem] = useState(null);
     const [restockAmount, setRestockAmount] = useState(0);
 
-    const handleRestock = () => {
-        setItems(prev => prev.map(item =>
-            item.id === restockItem.id
-                ? { ...item, stock: item.stock + parseInt(restockAmount) }
-                : item
-        ));
-        setRestockItem(null);
-        setRestockAmount(0);
+    const fetchItems = async () => {
+        setLoading(true);
+        try {
+            const response = await productApi.getProducts();
+            setItems(response.data);
+        } catch (error) {
+            console.error('Error fetching inventory:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    React.useEffect(() => {
+        fetchItems();
+    }, []);
+
+    const handleRestock = async () => {
+        if (!restockItem) return;
+
+        try {
+            const newStock = (restockItem.stock || 0) + parseInt(restockAmount);
+            await productApi.updateProduct(restockItem._id, { stock: newStock });
+            await fetchItems(); // Refresh the list
+            setRestockItem(null);
+            setRestockAmount(0);
+        } catch (error) {
+            console.error('Error restocking item:', error);
+            alert('Failed to restock. Please try again.');
+        }
     };
 
     const getStockStatus = (stock, minStock) => {
@@ -128,55 +143,62 @@ const InventoryPage = () => {
                     />
                 </div>
                 <TableContainer>
-                    <Table>
-                        <TableHead className="bg-slate-50">
-                            <TableRow>
-                                <TableCell className="font-bold text-slate-500">Product</TableCell>
-                                <TableCell className="font-bold text-slate-500">Category</TableCell>
-                                <TableCell className="font-bold text-slate-500">Stock</TableCell>
-                                <TableCell className="font-bold text-slate-500">Status</TableCell>
-                                <TableCell align="right" className="font-bold text-slate-500">Actions</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {items.map((item) => {
-                                const status = getStockStatus(item.stock, item.minStock);
-                                return (
-                                    <TableRow key={item.id} hover>
-                                        <TableCell>
-                                            <p className="font-bold text-slate-700">{item.name}</p>
-                                            <p className="text-xs text-slate-400">ID: PRD-{item.id.toString().padStart(3, '0')}</p>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Chip label={item.category} size="small" variant="outlined" />
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-black text-lg">{item.stock}</span>
-                                                <span className="text-slate-400 text-xs">/ {item.minStock} min</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <span className={`${status.bg} px-3 py-1 rounded-full text-xs font-bold`}>
-                                                {status.label}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell align="right">
-                                            <Button
-                                                variant="text"
-                                                size="small"
-                                                className="text-primary-600 font-bold hover:bg-primary-50 px-4 py-1.5 rounded-lg"
-                                                onClick={() => setRestockItem(item)}
-                                                startIcon={<RefreshCcw size={16} />}
-                                            >
-                                                Restock
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                );
-                            })}
-                        </TableBody>
-                    </Table>
+                    {loading ? (
+                        <Box sx={{ p: 4, textAlign: 'center' }}>
+                            <LinearProgress className="rounded-full h-1.5 mb-2" />
+                            <Typography variant="body2" className="text-slate-500">Loading inventory data...</Typography>
+                        </Box>
+                    ) : (
+                        <Table>
+                            <TableHead className="bg-slate-50">
+                                <TableRow>
+                                    <TableCell className="font-bold text-slate-500">Product</TableCell>
+                                    <TableCell className="font-bold text-slate-500">Category</TableCell>
+                                    <TableCell className="font-bold text-slate-500">Stock</TableCell>
+                                    <TableCell className="font-bold text-slate-500">Status</TableCell>
+                                    <TableCell align="right" className="font-bold text-slate-500">Actions</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {items.map((item) => {
+                                    const status = getStockStatus(item.stock, item.minStock || 10);
+                                    return (
+                                        <TableRow key={item._id} hover>
+                                            <TableCell>
+                                                <p className="font-bold text-slate-700">{item.name}</p>
+                                                <p className="text-xs text-slate-400">ID: {item._id.substring(0, 8)}...</p>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Chip label={item.category} size="small" variant="outlined" />
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-black text-lg">{item.stock}</span>
+                                                    <span className="text-slate-400 text-xs">/ {item.minStock || 10} min</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className={`${status.bg} px-3 py-1 rounded-full text-xs font-bold`}>
+                                                    {status.label}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell align="right">
+                                                <Button
+                                                    variant="text"
+                                                    size="small"
+                                                    className="text-primary-600 font-bold hover:bg-primary-50 px-4 py-1.5 rounded-lg"
+                                                    onClick={() => setRestockItem(item)}
+                                                    startIcon={<RefreshCcw size={16} />}
+                                                >
+                                                    Restock
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
+                            </TableBody>
+                        </Table>
+                    )}
                 </TableContainer>
             </Paper>
 

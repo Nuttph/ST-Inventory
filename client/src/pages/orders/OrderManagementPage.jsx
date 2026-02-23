@@ -29,24 +29,40 @@ import {
     Clock,
     Eye
 } from 'lucide-react';
-
-const mockOrders = [
-    { id: 'ORD-001', customer: 'John Doe', amount: 3450, status: 'pending', date: '2026-02-23' },
-    { id: 'ORD-002', customer: 'Jane Smith', amount: 1200, status: 'approved', date: '2026-02-22' },
-    { id: 'ORD-003', customer: 'Robert Brown', amount: 8900, status: 'paid', date: '2026-02-21' },
-    { id: 'ORD-004', customer: 'Sarah Wilson', status: 'packing', amount: 450, date: '2026-02-20' },
-    { id: 'ORD-005', customer: 'Michael Lee', status: 'shipped', amount: 1500, date: '2026-02-19' },
-];
+import orderApi from '../../api/orderApi';
 
 const OrderManagementPage = () => {
     const [tab, setTab] = useState(0);
-    const [orders, setOrders] = useState(mockOrders);
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedOrder, setSelectedOrder] = useState(null);
 
-    const handleAction = (orderId, newStatus) => {
-        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
-        setAnchorEl(null);
+    const fetchOrders = async () => {
+        setLoading(true);
+        try {
+            const response = await orderApi.getOrders();
+            setOrders(response.data);
+        } catch (error) {
+            console.error('Error fetching orders:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    React.useEffect(() => {
+        fetchOrders();
+    }, []);
+
+    const handleAction = async (orderId, newStatus) => {
+        try {
+            await orderApi.updateOrder(orderId, { status: newStatus });
+            await fetchOrders();
+            setAnchorEl(null);
+        } catch (error) {
+            console.error('Error updating order:', error);
+            alert('Failed to update order status.');
+        }
     };
 
     const getStatusColor = (status) => {
@@ -95,77 +111,83 @@ const OrderManagementPage = () => {
                 </Box>
 
                 <TableContainer>
-                    <Table sx={{ minWidth: 650 }}>
-                        <TableHead className="bg-slate-50">
-                            <TableRow>
-                                <TableCell className="font-bold text-slate-500 py-4">Order ID</TableCell>
-                                <TableCell className="font-bold text-slate-500 py-4">Customer</TableCell>
-                                <TableCell className="font-bold text-slate-500 py-4">Amount</TableCell>
-                                <TableCell className="font-bold text-slate-500 py-4">Date</TableCell>
-                                <TableCell className="font-bold text-slate-500 py-4">Status</TableCell>
-                                <TableCell align="right" className="font-bold text-slate-500 py-4">Actions</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {orders.map((order) => (
-                                <TableRow key={order.id} hover className="transition-colors">
-                                    <TableCell className="font-bold text-slate-700">{order.id}</TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <Avatar sx={{ width: 30, height: 30, fontSize: 12 }}>{order.customer[0]}</Avatar>
-                                            <span className="font-medium">{order.customer}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="font-bold">฿{order.amount.toLocaleString()}</TableCell>
-                                    <TableCell className="text-slate-500">{order.date}</TableCell>
-                                    <TableCell>
-                                        <Chip
-                                            label={<span className="flex items-center capitalize">{getStatusIcon(order.status)}{order.status}</span>}
-                                            color={getStatusColor(order.status)}
-                                            size="small"
-                                            className="font-bold rounded-lg"
-                                        />
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <div className="flex justify-end gap-1">
-                                            {order.status === 'pending' && (
-                                                <Tooltip title="Approve">
-                                                    <IconButton onClick={() => handleAction(order.id, 'approved')} className="text-green-600 bg-green-50">
-                                                        <CheckCircle size={18} />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            )}
-
-                                            {order.status === 'paid' && (
-                                                <Tooltip title="Start Packing">
-                                                    <IconButton onClick={() => handleAction(order.id, 'packing')} className="text-orange-600 bg-orange-50">
-                                                        <Package size={18} />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            )}
-
-                                            {order.status === 'packing' && (
-                                                <Tooltip title="Ship Order">
-                                                    <IconButton onClick={() => handleAction(order.id, 'shipped')} className="text-blue-600 bg-blue-50">
-                                                        <Truck size={18} />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            )}
-
-                                            <IconButton
-                                                onClick={(e) => {
-                                                    setAnchorEl(e.currentTarget);
-                                                    setSelectedOrder(order);
-                                                }}
-                                            >
-                                                <MoreVertical size={18} />
-                                            </IconButton>
-                                        </div>
-                                    </TableCell>
+                    {loading ? (
+                        <Box sx={{ p: 4, textAlign: 'center' }}>
+                            <Typography variant="body2" className="text-slate-500">Loading orders...</Typography>
+                        </Box>
+                    ) : (
+                        <Table sx={{ minWidth: 650 }}>
+                            <TableHead className="bg-slate-50">
+                                <TableRow>
+                                    <TableCell className="font-bold text-slate-500 py-4">Order ID</TableCell>
+                                    <TableCell className="font-bold text-slate-500 py-4">Customer</TableCell>
+                                    <TableCell className="font-bold text-slate-500 py-4">Amount</TableCell>
+                                    <TableCell className="font-bold text-slate-500 py-4">Date</TableCell>
+                                    <TableCell className="font-bold text-slate-500 py-4">Status</TableCell>
+                                    <TableCell align="right" className="font-bold text-slate-500 py-4">Actions</TableCell>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHead>
+                            <TableBody>
+                                {orders.map((order) => (
+                                    <TableRow key={order._id} hover className="transition-colors">
+                                        <TableCell className="font-bold text-slate-700">{order.orderId || order._id.substring(0, 8)}</TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                <Avatar sx={{ width: 30, height: 30, fontSize: 12 }}>{order.customer[0]}</Avatar>
+                                                <span className="font-medium">{order.customer}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="font-bold">฿{order.amount.toLocaleString()}</TableCell>
+                                        <TableCell className="text-slate-500">{new Date(order.date).toLocaleDateString()}</TableCell>
+                                        <TableCell>
+                                            <Chip
+                                                label={<span className="flex items-center capitalize">{getStatusIcon(order.status)}{order.status}</span>}
+                                                color={getStatusColor(order.status)}
+                                                size="small"
+                                                className="font-bold rounded-lg"
+                                            />
+                                        </TableCell>
+                                        <TableCell align="right">
+                                            <div className="flex justify-end gap-1">
+                                                {order.status === 'pending' && (
+                                                    <Tooltip title="Approve">
+                                                        <IconButton onClick={() => handleAction(order._id, 'approved')} className="text-green-600 bg-green-50">
+                                                            <CheckCircle size={18} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                )}
+
+                                                {order.status === 'paid' && (
+                                                    <Tooltip title="Start Packing">
+                                                        <IconButton onClick={() => handleAction(order._id, 'packing')} className="text-orange-600 bg-orange-50">
+                                                            <Package size={18} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                )}
+
+                                                {order.status === 'packing' && (
+                                                    <Tooltip title="Ship Order">
+                                                        <IconButton onClick={() => handleAction(order._id, 'shipped')} className="text-blue-600 bg-blue-50">
+                                                            <Truck size={18} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                )}
+
+                                                <IconButton
+                                                    onClick={(e) => {
+                                                        setAnchorEl(e.currentTarget);
+                                                        setSelectedOrder(order);
+                                                    }}
+                                                >
+                                                    <MoreVertical size={18} />
+                                                </IconButton>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    )}
                 </TableContainer>
             </Paper>
 

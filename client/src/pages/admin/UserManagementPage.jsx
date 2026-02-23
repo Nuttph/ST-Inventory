@@ -21,19 +21,42 @@ import {
     InputLabel
 } from '@mui/material';
 import { Search, UserPlus, Shield, MoreVertical, Trash2, Edit } from 'lucide-react';
-import mockUsers from '../../data/users.json';
+import userApi from '../../api/userApi';
 
 const UserManagementPage = () => {
-    const [users, setUsers] = useState(mockUsers);
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+
+    const fetchUsers = async () => {
+        setLoading(true);
+        try {
+            const response = await userApi.getUsers();
+            setUsers(response.data);
+        } catch (error) {
+            console.error('Error fetching users:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchUsers();
+    }, []);
 
     const filteredUsers = users.filter(user =>
         user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleRoleChange = (userId, newRole) => {
-        setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
+    const handleRoleChange = async (userId, newRole) => {
+        try {
+            await userApi.updateUser(userId, { role: newRole });
+            await fetchUsers();
+        } catch (error) {
+            console.error('Error updating role:', error);
+            alert('Failed to update user role.');
+        }
     };
 
     const getRoleColor = (role) => {
@@ -81,62 +104,77 @@ const UserManagementPage = () => {
                 </div>
 
                 <TableContainer>
-                    <Table>
-                        <TableHead className="bg-slate-50">
-                            <TableRow>
-                                <TableCell className="font-bold text-slate-500">User</TableCell>
-                                <TableCell className="font-bold text-slate-500">Email</TableCell>
-                                <TableCell className="font-bold text-slate-500">Role</TableCell>
-                                <TableCell className="font-bold text-slate-500">Status</TableCell>
-                                <TableCell align="right" className="font-bold text-slate-500">Actions</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {filteredUsers.map((user) => (
-                                <TableRow key={user.id} hover>
-                                    <TableCell>
-                                        <div className="flex items-center gap-3">
-                                            <Avatar sx={{ bgcolor: getRoleColor(user.role) + '.main' }}>{user.name[0]}</Avatar>
-                                            <span className="font-bold text-slate-700">{user.name}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-slate-500">{user.email}</TableCell>
-                                    <TableCell>
-                                        <FormControl size="small" sx={{ minWidth: 120 }}>
-                                            <Select
-                                                value={user.role}
-                                                onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                                                sx={{ borderRadius: 2, fontSize: '0.875rem' }}
-                                            >
-                                                <MenuItem value="member">Member</MenuItem>
-                                                <MenuItem value="staff">Staff</MenuItem>
-                                                <MenuItem value="manager">Manager</MenuItem>
-                                            </Select>
-                                        </FormControl>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Chip
-                                            label={user.status}
-                                            size="small"
-                                            color={user.status === 'active' ? 'success' : 'default'}
-                                            variant="light"
-                                            className="font-bold capitalize"
-                                        />
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <div className="flex justify-end gap-1">
-                                            <IconButton size="small" className="text-slate-400">
-                                                <Edit size={18} />
-                                            </IconButton>
-                                            <IconButton size="small" className="text-red-400">
-                                                <Trash2 size={18} />
-                                            </IconButton>
-                                        </div>
-                                    </TableCell>
+                    {loading ? (
+                        <Box sx={{ p: 4, textAlign: 'center' }}>
+                            <Typography variant="body2" className="text-slate-500">Loading users...</Typography>
+                        </Box>
+                    ) : (
+                        <Table>
+                            <TableHead className="bg-slate-50">
+                                <TableRow>
+                                    <TableCell className="font-bold text-slate-500">User</TableCell>
+                                    <TableCell className="font-bold text-slate-500">Email</TableCell>
+                                    <TableCell className="font-bold text-slate-500">Role</TableCell>
+                                    <TableCell className="font-bold text-slate-500">Status</TableCell>
+                                    <TableCell align="right" className="font-bold text-slate-500">Actions</TableCell>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHead>
+                            <TableBody>
+                                {filteredUsers.map((user) => (
+                                    <TableRow key={user._id} hover>
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                <Avatar sx={{ bgcolor: getRoleColor(user.role) + '.main' }}>{user.name ? user.name[0] : '?'}</Avatar>
+                                                <span className="font-bold text-slate-700">{user.name}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-slate-500">{user.email}</TableCell>
+                                        <TableCell>
+                                            <FormControl size="small" sx={{ minWidth: 120 }}>
+                                                <Select
+                                                    value={user.role}
+                                                    onChange={(e) => handleRoleChange(user._id, e.target.value)}
+                                                    sx={{ borderRadius: 2, fontSize: '0.875rem' }}
+                                                >
+                                                    <MenuItem value="member">Member</MenuItem>
+                                                    <MenuItem value="staff">Staff</MenuItem>
+                                                    <MenuItem value="manager">Manager</MenuItem>
+                                                </Select>
+                                            </FormControl>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Chip
+                                                label={user.status}
+                                                size="small"
+                                                color={user.status === 'active' ? 'success' : 'default'}
+                                                variant="light"
+                                                className="font-bold capitalize"
+                                            />
+                                        </TableCell>
+                                        <TableCell align="right">
+                                            <div className="flex justify-end gap-1">
+                                                <IconButton size="small" className="text-slate-400">
+                                                    <Edit size={18} />
+                                                </IconButton>
+                                                <IconButton size="small" className="text-red-400" onClick={async () => {
+                                                    if (window.confirm('Are you sure you want to delete this user?')) {
+                                                        try {
+                                                            await userApi.deleteUser(user._id);
+                                                            await fetchUsers();
+                                                        } catch (error) {
+                                                            alert('Failed to delete user.');
+                                                        }
+                                                    }
+                                                }}>
+                                                    <Trash2 size={18} />
+                                                </IconButton>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    )}
                 </TableContainer>
             </Paper>
         </Box>

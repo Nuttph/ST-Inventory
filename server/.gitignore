@@ -1,0 +1,41 @@
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs
+*.log
+
+# Environment variables (สำคัญมาก: ห้ามลืม!)
+.env
+.env.test
+.env.production
+.env.local
+
+# OS Metadata
+.DS_Store
+Thumbs.db
+
+# IDE/Editor folders
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build/Dist output (ถ้ามีการใช้ TypeScript หรือ Babel)
+dist/
+build/
+out/
+
+# Testing
+coverage/
+.nyc_output
+
+# Documentation (ถ้ามี)
+docs/site/
+
+# Optional: เครื่องมืออื่นๆ
+.eslintcache

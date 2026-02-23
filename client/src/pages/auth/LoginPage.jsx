@@ -17,7 +17,7 @@ import {
 import { Mail, Lock, Eye, EyeOff, LogIn, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
-import mockUsers from '../../data/users.json';
+import axiosInstance from '../../api/axiosInstance';
 
 const schema = z.object({
     email: z.string().email('Invalid email address'),
@@ -41,28 +41,21 @@ const LoginPage = () => {
     const onSubmit = async (data) => {
         setError('');
         try {
-            // Find user in mock data
-            const user = mockUsers.find(u => u.email === data.email);
+            const response = await axiosInstance.post('/auth/login', {
+                email: data.email,
+                password: data.password
+            });
 
-            if (user) {
-                login(user);
+            if (response.data.token && response.data.user) {
+                login(response.data.user, response.data.token);
                 navigate('/');
             } else {
-                // Mock default for easy testing
-                let role = 'member';
-                if (data.email.startsWith('admin')) role = 'manager';
-                if (data.email.startsWith('staff')) role = 'staff';
-
-                login({
-                    id: Date.now(),
-                    name: data.email.split('@')[0],
-                    email: data.email,
-                    role: role
-                });
-                navigate('/');
+                setError('Invalid server response.');
             }
         } catch (err) {
-            setError('Invalid credentials. Try again.');
+            console.error('Login error:', err);
+            const message = err.response?.data?.message || 'Invalid credentials or server error.';
+            setError(message);
         }
     };
 

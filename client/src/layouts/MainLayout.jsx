@@ -19,7 +19,8 @@ import {
     Badge,
     Tooltip,
     Paper,
-    Chip
+    Chip,
+    Button
 } from '@mui/material';
 import {
     LayoutDashboard,
@@ -158,11 +159,11 @@ const MainLayout = () => {
                                             <img src={item.image} className="w-16 h-16 rounded-xl object-cover" />
                                             <div className="flex-grow">
                                                 <p className="font-bold text-slate-800 text-sm line-clamp-1">{item.name}</p>
-                                                <p className="text-primary-600 font-black text-sm">฿{item.price.toLocaleString()}</p>
+                                                <p className="text-primary-600 font-black text-sm">฿{(Number(item.price) || 0).toLocaleString()}</p>
                                                 <div className="flex items-center gap-2 mt-1">
-                                                    <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center font-bold">-</button>
-                                                    <span className="text-xs font-black">{item.quantity}</span>
-                                                    <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center font-bold">+</button>
+                                                    <button onClick={() => updateQuantity(item.id, (item.quantity || 0) - 1)} className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center font-bold">-</button>
+                                                    <span className="text-xs font-black">{item.quantity || 0}</span>
+                                                    <button onClick={() => updateQuantity(item.id, (item.quantity || 0) + 1)} className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center font-bold">+</button>
                                                 </div>
                                             </div>
                                             <IconButton onClick={() => removeFromCart(item.id)} size="small" className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -178,9 +179,17 @@ const MainLayout = () => {
                                     <Divider className="mb-4" />
                                     <div className="mb-4 flex justify-between">
                                         <span className="font-bold text-slate-500">Total</span>
-                                        <span className="font-black text-xl text-slate-800">฿{cartTotal.toLocaleString()}</span>
+                                        <span className="font-black text-xl text-slate-800">฿{(cartTotal || 0).toLocaleString()}</span>
                                     </div>
-                                    <Button fullWidth variant="contained" className="bg-primary-600 rounded-2xl py-3 font-black shadow-lg shadow-primary-100">
+                                    <Button
+                                        fullWidth
+                                        variant="contained"
+                                        className="bg-primary-600 rounded-2xl py-3 font-black shadow-lg shadow-primary-100"
+                                        onClick={() => {
+                                            handleClose();
+                                            navigate('/payment');
+                                        }}
+                                    >
                                         Checkout Now
                                     </Button>
                                 </>

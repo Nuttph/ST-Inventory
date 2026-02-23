@@ -13,8 +13,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/products', require('./routes/productRoutes'));
+app.use('/api/orders', require('./routes/orderRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
+
 app.get('/', (req, res) => {
-    res.send('API is 1 running...');
+    res.send('API is running...');
 });
 app.get('/test', (req, res) => {
     res.json({ message: 'API is running...' });

@@ -17,10 +17,10 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
     }, []);
 
-    const login = (userData) => {
+    const login = (userData, token) => {
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
-        localStorage.setItem('token', 'mock-token-' + Math.random().toString(36).substr(2));
+        localStorage.setItem('token', token);
     };
 
     const logout = () => {

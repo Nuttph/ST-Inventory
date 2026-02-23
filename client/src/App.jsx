@@ -18,9 +18,11 @@ import ShopPage from './pages/dashboard/ShopPage';
 import OrderManagementPage from './pages/orders/OrderManagementPage';
 import InventoryPage from './pages/inventory/InventoryPage';
 import UserManagementPage from './pages/admin/UserManagementPage';
+import PaymentPage from './pages/orders/PaymentPage';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const theme = createTheme({
   palette: {
@@ -68,48 +70,51 @@ function App() {
       <AuthProvider>
         <CartProvider>
           <Router>
-            <Routes>
-              {/* Auth Routes */}
-              <Route element={<AuthLayout />}>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-              </Route>
+            <ErrorBoundary>
+              <Routes>
+                {/* Auth Routes */}
+                <Route element={<AuthLayout />}>
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
+                </Route>
 
-              {/* Main Routes */}
-              <Route element={
-                <ProtectedRoute>
-                  <MainLayout />
-                </ProtectedRoute>
-              }>
-                <Route path="/" element={<Navigate to="/shop" />} />
-                <Route path="/shop" element={<ShopPage />} />
-
-                {/* Manager/Staff Only */}
-                <Route path="/inventory" element={
-                  <ProtectedRoute roles={['manager', 'staff']}>
-                    <InventoryPage />
+                {/* Main Routes */}
+                <Route element={
+                  <ProtectedRoute>
+                    <MainLayout />
                   </ProtectedRoute>
-                } />
+                }>
+                  <Route path="/" element={<Navigate to="/shop" />} />
+                  <Route path="/shop" element={<ShopPage />} />
 
-                <Route path="/admin/orders" element={
-                  <ProtectedRoute roles={['manager', 'staff']}>
-                    <OrderManagementPage />
-                  </ProtectedRoute>
-                } />
+                  {/* Manager/Staff Only */}
+                  <Route path="/inventory" element={
+                    <ProtectedRoute roles={['manager', 'staff']}>
+                      <InventoryPage />
+                    </ProtectedRoute>
+                  } />
 
-                {/* Manager Only */}
-                <Route path="/admin/users" element={
-                  <ProtectedRoute roles={['manager']}>
-                    <UserManagementPage />
-                  </ProtectedRoute>
-                } />
+                  <Route path="/admin/orders" element={
+                    <ProtectedRoute roles={['manager', 'staff']}>
+                      <OrderManagementPage />
+                    </ProtectedRoute>
+                  } />
 
-                <Route path="/orders" element={<div>Customer Orders View (Coming Soon)</div>} />
-              </Route>
+                  {/* Manager Only */}
+                  <Route path="/admin/users" element={
+                    <ProtectedRoute roles={['manager']}>
+                      <UserManagementPage />
+                    </ProtectedRoute>
+                  } />
 
-              {/* Fallback */}
-              <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
+                  <Route path="/payment" element={<PaymentPage />} />
+                  <Route path="/orders" element={<div>Customer Orders View (Coming Soon)</div>} />
+                </Route>
+
+                {/* Fallback */}
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+            </ErrorBoundary>
           </Router>
         </CartProvider>
       </AuthProvider>

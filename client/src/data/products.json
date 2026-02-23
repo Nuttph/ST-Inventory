@@ -1,0 +1,102 @@
+[
+    {
+        "id": 1,
+        "name": "Premium Coffee Beans",
+        "price": 250,
+        "stock": 15,
+        "category": "Food",
+        "rating": 4.8,
+        "reviews": 124,
+        "image": "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=800&auto=format&fit=crop&q=60"
+    },
+    {
+        "id": 2,
+        "name": "Wireless Headphones",
+        "price": 1500,
+        "stock": 8,
+        "category": "Electronics",
+        "rating": 4.5,
+        "reviews": 89,
+        "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=60"
+    },
+    {
+        "id": 3,
+        "name": "Minimalist Watch",
+        "price": 3200,
+        "stock": 5,
+        "category": "Fashion",
+        "rating": 4.9,
+        "reviews": 56,
+        "image": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=60"
+    },
+    {
+        "id": 4,
+        "name": "Smart Plant Pot",
+        "price": 850,
+        "stock": 20,
+        "category": "Home",
+        "rating": 4.2,
+        "reviews": 34,
+        "image": "https://images.unsplash.com/photo-1485955900006-10f4d324d445?w=800&auto=format&fit=crop&q=60"
+    },
+    {
+        "id": 5,
+        "name": "Leather Journal",
+        "price": 450,
+        "stock": 12,
+        "category": "Stationery",
+        "rating": 4.7,
+        "reviews": 78,
+        "image": "https://images.unsplash.com/photo-1544816155-12df9643f363?w=800&auto=format&fit=crop&q=60"
+    },
+    {
+        "id": 6,
+        "name": "Ergonomic Mouse",
+        "price": 1200,
+        "stock": 10,
+        "category": "Electronics",
+        "rating": 4.6,
+        "reviews": 210,
+        "image": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=800&auto=format&fit=crop&q=60"
+    },
+    {
+        "id": 7,
+        "name": "Bamboo Toothbrush",
+        "price": 80,
+        "stock": 50,
+        "category": "Living",
+        "rating": 4.4,
+        "reviews": 156,
+        "image": "https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?w=800&auto=format&fit=crop&q=60"
+    },
+    {
+        "id": 8,
+        "name": "Organic Green Tea",
+        "price": 350,
+        "stock": 25,
+        "category": "Food",
+        "rating": 4.8,
+        "reviews": 92,
+        "image": "https://images.unsplash.com/photo-1523906630133-f75b5d134dc2?w=800&auto=format&fit=crop&q=60"
+    },
+    {
+        "id": 9,
+        "name": "Cork Yoga Mat",
+        "price": 1800,
+        "stock": 6,
+        "category": "Sports",
+        "rating": 4.7,
+        "reviews": 45,
+        "image": "https://images.unsplash.com/photo-1592432676556-382046422998?w=800&auto=format&fit=crop&q=60"
+    },
+    {
+        "id": 10,
+        "name": "Ceramic Table Lamp",
+        "price": 2100,
+        "stock": 4,
+        "category": "Home",
+        "rating": 4.9,
+        "reviews": 28,
+        "image": "https://images.unsplash.com/photo-1534073828943-f801091bb18c?w=800&auto=format&fit=crop&q=60"
+    }
+]

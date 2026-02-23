@@ -1,0 +1,30 @@
+[
+    {
+        "id": 1,
+        "name": "Manager User",
+        "email": "manager@example.com",
+        "role": "manager",
+        "status": "active"
+    },
+    {
+        "id": 2,
+        "name": "Staff User",
+        "email": "staff@example.com",
+        "role": "staff",
+        "status": "active"
+    },
+    {
+        "id": 3,
+        "name": "John Member",
+        "email": "member@example.com",
+        "role": "member",
+        "status": "active"
+    },
+    {
+        "id": 4,
+        "name": "Jane Doe",
+        "email": "jane@example.com",
+        "role": "member",
+        "status": "inactive"
+    }
+]

@@ -1,35 +1,120 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+
+// Context
+import { AuthProvider } from './context/AuthContext';
+import { CartProvider } from './context/CartContext';
+
+// Layouts
+import MainLayout from './layouts/MainLayout';
+import AuthLayout from './layouts/AuthLayout';
+
+// Pages
+import LoginPage from './pages/auth/LoginPage';
+import RegisterPage from './pages/auth/RegisterPage';
+import ShopPage from './pages/dashboard/ShopPage';
+import OrderManagementPage from './pages/orders/OrderManagementPage';
+import InventoryPage from './pages/inventory/InventoryPage';
+import UserManagementPage from './pages/admin/UserManagementPage';
+
+// Components
+import ProtectedRoute from './components/ProtectedRoute';
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#3b82f6',
+      light: '#60a5fa',
+      dark: '#2563eb',
+    },
+    secondary: {
+      main: '#6366f1',
+    },
+    background: {
+      default: '#f8fafc',
+    },
+  },
+  typography: {
+    fontFamily: '"Outfit", "Roboto", "Helvetica", "Arial", sans-serif',
+  },
+  shape: {
+    borderRadius: 12,
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          fontWeight: 600,
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+        },
+      },
+    },
+  },
+});
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <AuthProvider>
+        <CartProvider>
+          <Router>
+            <Routes>
+              {/* Auth Routes */}
+              <Route element={<AuthLayout />}>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+              </Route>
+
+              {/* Main Routes */}
+              <Route element={
+                <ProtectedRoute>
+                  <MainLayout />
+                </ProtectedRoute>
+              }>
+                <Route path="/" element={<Navigate to="/shop" />} />
+                <Route path="/shop" element={<ShopPage />} />
+
+                {/* Manager/Staff Only */}
+                <Route path="/inventory" element={
+                  <ProtectedRoute roles={['manager', 'staff']}>
+                    <InventoryPage />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/admin/orders" element={
+                  <ProtectedRoute roles={['manager', 'staff']}>
+                    <OrderManagementPage />
+                  </ProtectedRoute>
+                } />
+
+                {/* Manager Only */}
+                <Route path="/admin/users" element={
+                  <ProtectedRoute roles={['manager']}>
+                    <UserManagementPage />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/orders" element={<div>Customer Orders View (Coming Soon)</div>} />
+              </Route>
+
+              {/* Fallback */}
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </Router>
+        </CartProvider>
+      </AuthProvider>
+    </ThemeProvider>
+  );
 }
 
-export default App
+export default App;

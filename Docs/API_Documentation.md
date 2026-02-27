@@ -1,17 +1,17 @@
-# API Documentation - ST-Inventory
+# บทสรุป API และข้อมูลทางเทคนิค - ST-Inventory
 
-This document describes the API endpoints available in the ST-Inventory system.
+เอกสารนี้อธิบายเกี่ยวกับ API Endpoints และตรรกะทางธุรกิจของระบบ ST-Inventory
 
 ## Base URL
 `http://localhost:5000/api`
 
 ---
 
-## 1. Authentication (`/auth`)
+## 1. การยืนยันตัวตน (`/auth`)
 
-### 1.1 Login
+### 1.1 เข้าสู่ระบบ (Login)
 - **Endpoint:** `POST /auth/login`
-- **Description:** Authenticate a user and return a token.
+- **คำอธิบาย:** ตรวจสอบสิทธิ์ผู้ใช้งานและคืนค่า Token
 - **Request Body:**
 ```json
 {
@@ -19,159 +19,40 @@ This document describes the API endpoints available in the ST-Inventory system.
   "password": "password123"
 }
 ```
-- **Expected Result:**
-  - `200 OK`: Returns user object with `token`.
-  - `401 Unauthorized`: Invalid credentials.
-
-### 1.2 Register
-- **Endpoint:** `POST /auth/register`
-- **Description:** Register a new user.
-- **Request Body:**
-```json
-{
-  "name": "Full Name",
-  "email": "user@example.com",
-  "password": "password123",
-  "role": "member" // optional (default: member)
-}
-```
-- **Expected Result:**
-  - `201 Created`: Returns the newly created user object.
-  - `400 Bad Request`: User already exists or invalid data.
+- **ผลลัพธ์ที่คาดหวัง:**
+  - `200 OK`: คืนค่า Object ผู้ใช้งานพร้อม `token`
+  - `401 Unauthorized`: อีเมลหรือรหัสผ่านไม่ถูกต้อง
 
 ---
 
-## 2. Products (`/products`)
+## 2. การจัดการสินค้า (`/products`)
 
-### 2.1 Get All Products
-- **Endpoint:** `GET /products`
-- **Description:** Retrieve a list of all products.
-- **Expected Result:**
-  - `200 OK`: Array of product objects.
-
-### 2.2 Create Product
+### 2.1 เพิ่มสินค้าใหม่
 - **Endpoint:** `POST /products`
-- **Description:** Add a new product to the inventory.
-- **Request Body:**
-```json
-{
-  "name": "Product Name",
-  "price": 100,
-  "stock": 50,
-  "category": "Electronics",
-  "image": "url_string" // optional
-}
-```
-- **Expected Result:**
-  - `201 Created`: Returns the created product.
-  - `400 Bad Request`: Validation error.
+- **คำอธิบาย:** เพิ่มรายการสินค้าใหม่เข้าสู่ระบบ
+- **ผลลัพธ์ที่คาดหวัง:**
+  - `201 Created`: คืนค่าข้อมูลสินค้าที่สร้างสำเร็จ
 
-### 2.3 Update Product
+### 2.2 แก้ไขสินค้า
 - **Endpoint:** `PUT /products/:id`
-- **Description:** Update an existing product.
-- **Request Body:**
-```json
-{
-  "name": "Updated Name",
-  "price": 120,
-  "stock": 45,
-  "category": "Electronics"
-}
-```
-- **Expected Result:**
-  - `200 OK`: Returns the updated product object.
-  - `404 Not Found`: Product ID doesn't exist.
+- **คำอธิบาย:** อัปเดตข้อมูลสินค้า (ชื่อ, ราคา, หมวดหมู่, สต็อก)
+- **ผลลัพธ์ที่คาดหวัง:**
+  - `200 OK`: คืนค่าข้อมูลที่อัปเดตแล้ว
 
-### 2.4 Delete Product
+### 2.3 ลบสินค้า
 - **Endpoint:** `DELETE /products/:id`
-- **Description:** Remove a product from the inventory permanently.
-- **Expected Result:**
-  - `200 OK`: `{"message": "Product removed"}`
-  - `404 Not Found`: Product ID doesn't exist.
+- **คำอธิบาย:** ลบสินค้าออกจากระบบอย่างถาวร
 
 ---
 
-## 3. Orders (`/orders`)
+## 3. การจัดการคำสั่งซื้อ (`/orders`)
 
-### 3.1 Get All Orders
-- **Endpoint:** `GET /orders`
-- **Description:** Retrieve a list of all orders.
-- **Expected Result:**
-  - `200 OK`: Array of order objects with populated user and payment info.
-
-### 3.2 Get Order by ID
-- **Endpoint:** `GET /orders/:id`
-- **Description:** Retrieve detailed information for a specific order.
-- **Expected Result:**
-  - `200 OK`: Order object with nested `items` (orderDetails).
-  - `404 Not Found`: Order ID doesn't exist.
-
-### 3.3 Create Order
+### 3.1 สร้างคำสั่งซื้อ
 - **Endpoint:** `POST /orders`
-- **Description:** Place a new order. **Note: This action automatically validates and reduces the product stock.**
-- **Business Logic:**
-  - If any item in the request has a `quantity` greater than its available `stock`, the request will fail with `400 Bad Request`.
-  - Upon success, the product's `stock` will be decremented by the ordered `quantity`.
-- **Request Body:**
-```json
-{
-  "orderId": "ORD-12345",
-  "user": "user_id",
-  "customer": "Customer Name",
-  "amount": 500,
-  "status": "pending",
-  "paymentMethod": "qr",
-  "items": [
-    {
-      "_id": "product_id",
-      "name": "Product Name",
-      "price": 250,
-      "quantity": 2
-    }
-  ]
-}
-```
-- **Expected Result:**
-  - `201 Created`: Returns the created order with payment details and updated stock.
-  - `400 Bad Request`: "Insufficient stock for [Product Name]" or validation error.
-
-### 3.4 Update Order
-- **Endpoint:** `PUT /orders/:id`
-- **Description:** Update order status or details.
-- **Expected Result:**
-  - `200 OK`: Returns updated order.
-
-### 3.5 Delete Order
-- **Endpoint:** `DELETE /orders/:id`
-- **Description:** Remove an order and its associated details/payments.
-- **Expected Result:**
-  - `200 OK`: Success message.
-
----
-
-## 4. Users (`/users`)
-
-### 4.1 Get All Users
-- **Endpoint:** `GET /users`
-- **Description:** Retrieve a list of all users.
-- **Expected Result:**
-  - `200 OK`: Array of user objects.
-
-### 4.2 Create User
-- **Endpoint:** `POST /users`
-- **Description:** Create a new user (Admin function).
-- **Request Body:** Similar to Register.
-- **Expected Result:**
-  - `201 Created`: Returns the created user.
-
-### 4.3 Update User
-- **Endpoint:** `PUT /users/:id`
-- **Description:** Update user role, status, or info.
-- **Expected Result:**
-  - `200 OK`: Returns updated user.
-
-### 4.4 Delete User
-- **Endpoint:** `DELETE /users/:id`
-- **Description:** Remove a user.
-- **Expected Result:**
-  - `200 OK`: Success message.
+- **คำอธิบาย:** บันทึกการสั่งซื้อสินค้า **พร้อมระบบตรวจสอบและตัดสต็อกอัตโนมัติ**
+- **ตรรกะทางธุรกิจ:**
+  - หากจำนวนที่สั่งซื้อ > จำนวนสต็อกที่มี ระบบจะตอบกลับด้วย `400 Bad Request`
+  - หากสำเร็จ จำนวนสต็อกสินค้าจะถูกหักออกทันที
+- **ผลลัพธ์ที่คาดหวัง:**
+  - `201 Created`: สร้างคำสั่งซื้อและหักสต็อกสำเร็จ
+  - `400 Bad Request`: "สินค้าไม่เพียงพอ" หรือข้อมูลไม่ถูกต้อง

@@ -34,6 +34,14 @@ const InventoryPage = () => {
     const [loading, setLoading] = useState(true);
     const [restockItem, setRestockItem] = useState(null);
     const [restockAmount, setRestockAmount] = useState(0);
+    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+    const [newProduct, setNewProduct] = useState({
+        name: '',
+        price: '',
+        stock: '',
+        category: '',
+        image: ''
+    });
 
     const fetchItems = async () => {
         setLoading(true);
@@ -66,6 +74,29 @@ const InventoryPage = () => {
         }
     };
 
+    const handleAddProduct = async () => {
+        try {
+            const productData = {
+                ...newProduct,
+                price: parseFloat(newProduct.price),
+                stock: parseInt(newProduct.stock)
+            };
+            await productApi.createProduct(productData);
+            await fetchItems();
+            setIsAddDialogOpen(false);
+            setNewProduct({
+                name: '',
+                price: '',
+                stock: '',
+                category: '',
+                image: ''
+            });
+        } catch (error) {
+            console.error('Error adding product:', error);
+            alert('Failed to add product. Please try again.');
+        }
+    };
+
     const getStockStatus = (stock, minStock) => {
         if (stock <= 0) return { label: 'Out of Stock', color: 'error', bg: 'bg-red-50 text-red-700' };
         if (stock < minStock) return { label: 'Low Stock', color: 'warning', bg: 'bg-orange-50 text-orange-700' };
@@ -84,6 +115,7 @@ const InventoryPage = () => {
                     variant="contained"
                     startIcon={<Plus size={20} />}
                     className="bg-primary-600 rounded-xl px-6 py-2.5 font-bold shadow-lg shadow-primary-100"
+                    onClick={() => setIsAddDialogOpen(true)}
                 >
                     Add New Product
                 </Button>
@@ -236,6 +268,75 @@ const InventoryPage = () => {
                         className="bg-primary-600 rounded-xl px-8 font-bold shadow-lg shadow-primary-100"
                     >
                         Confirm Restock
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Add Product Dialog */}
+            <Dialog
+                open={isAddDialogOpen}
+                onClose={() => setIsAddDialogOpen(false)}
+                PaperProps={{ className: 'rounded-3xl p-2 w-full max-w-md' }}
+            >
+                <DialogTitle className="font-bold text-slate-800">
+                    Add New Product
+                </DialogTitle>
+                <DialogContent>
+                    <div className="flex flex-col gap-4 mt-2">
+                        <TextField
+                            label="Product Name"
+                            fullWidth
+                            variant="outlined"
+                            value={newProduct.name}
+                            onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                        />
+                        <div className="flex gap-4">
+                            <TextField
+                                label="Price"
+                                type="number"
+                                fullWidth
+                                variant="outlined"
+                                value={newProduct.price}
+                                onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                            />
+                            <TextField
+                                label="Initial Stock"
+                                type="number"
+                                fullWidth
+                                variant="outlined"
+                                value={newProduct.stock}
+                                onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })}
+                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                            />
+                        </div>
+                        <TextField
+                            label="Category"
+                            fullWidth
+                            variant="outlined"
+                            value={newProduct.category}
+                            onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                        />
+                        <TextField
+                            label="Image URL (Optional)"
+                            fullWidth
+                            variant="outlined"
+                            value={newProduct.image}
+                            onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value })}
+                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                        />
+                    </div>
+                </DialogContent>
+                <DialogActions className="p-6">
+                    <Button onClick={() => setIsAddDialogOpen(false)} className="text-slate-400 font-bold">Cancel</Button>
+                    <Button
+                        onClick={handleAddProduct}
+                        variant="contained"
+                        className="bg-primary-600 rounded-xl px-8 font-bold shadow-lg shadow-primary-100"
+                    >
+                        Add Product
                     </Button>
                 </DialogActions>
             </Dialog>

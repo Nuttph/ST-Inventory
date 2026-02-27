@@ -1,64 +1,52 @@
-# Test Cases, Scripts, and Flow - ST-Inventory
+# Test Cases (Equivalence Partitioning) - ST-Inventory
 
-This document outlines the testing strategy for the API endpoints.
+This document contains comprehensive test cases categorized by module using Equivalence Partitioning (EP) and Boundary Value Analysis (BVA).
 
-## 1. Test Case Table
+## 1. Authentication Module (`/auth`)
 
-| ID | Module | Test Scenario | Input | Expected Result | Priority |
-|---|---|---|---|---|---|
-| TC-01 | Auth | Login with valid credentials | `{email: "valid@mail.com", password: "123"}` | `200 OK`, token returned | High |
-| TC-02 | Auth | Login with invalid password | `{email: "valid@mail.com", password: "wrong"}` | `401 Unauthorized` | High |
-| TC-03 | Product | Create product with missing price | `{name: "Test"}` | `400 Bad Request` | Medium |
-| TC-04 | Product | Get all products | N/A | `200 OK`, list of products | High |
-| TC-05 | Order | Create order with valid data | Valid order object | `201 Created`, Order + Payment | High |
-| TC-06 | User | Update user role to 'admin' | `{role: "admin"}` | `200 OK`, updated role | Medium |
-| TC-07 | Product | Update product details | `{price: 150}` | `200 OK`, product updated | Medium |
-| TC-08 | Product | Delete product existing ID | N/A | `200 OK`, message: "removed" | High |
+| ID | Test Scenario | Equivalence Class | Input | Expected Result |
+|---|---|---|---|---|
+| TC-AUTH-01 | Valid Login | Valid Email & Password | `email: "admin@st.com", pass: "123456"` | `200 OK`, JWT Token returned |
+| TC-AUTH-02 | Invalid Email | Email not found in DB | `email: "wrong@test.com", pass: "123"` | `401 Unauthorized` |
+| TC-AUTH-03 | Wrong Password | Correct Email, Wrong Password | `email: "admin@st.com", pass: "wrong"` | `401 Unauthorized` |
+| TC-AUTH-04 | Register Existing User | Email already exists | `email: "admin@st.com"` | `400 Bad Request`, "User already exists" |
+| TC-AUTH-05 | Register Missing Fields | Missing `name` or `email` | `{password: "123"}` | `400 Bad Request`, Error message |
+
+## 2. Product Management Module (`/products`)
+
+| ID | Test Scenario | Equivalence Class | Input | Expected Result |
+|---|---|---|---|---|
+| TC-PROD-01 | Create Valid Product | All valid fields | `{name: "CPU", price: 5000, stock: 10, category: "IT"}` | `201 Created` |
+| TC-PROD-02 | Price at Boundary (Min) | Price = 0 | `{price: 0}` | `201 Created` (or 400 if logic forbids) |
+| TC-PROD-03 | Negative Price | Price < 0 | `{price: -100}` | `400 Bad Request` |
+| TC-PROD-04 | Missing Required Field | No `name` provided | `{price: 100, stock: 1}` | `400 Bad Request` |
+| TC-PROD-05 | Update Non-existent ID | Invalid ID format or not found | `ID: "non-existent"` | `404 Not Found` |
+
+## 3. Order & Stock Integration Module (`/orders`)
+
+*Note: Create Order now automatically decrements Product Stock.*
+
+| ID | Test Scenario | Equivalence Class | Input | Expected Result |
+|---|---|---|---|---|
+| TC-ORD-01 | Successful Order | Stock > Quantity | `items: [{_id: "P1", quantity: 2}]` (Stock: 10) | `201 Created`, Stock becomes 8 |
+| TC-ORD-02 | Exact Stock Order | Stock = Quantity | `items: [{_id: "P1", quantity: 10}]` (Stock: 10) | `201 Created`, Stock becomes 0 |
+| TC-ORD-03 | Out of Stock Order | Stock < Quantity | `items: [{_id: "P1", quantity: 15}]` (Stock: 10) | `400 Bad Request`, "Insufficient stock" |
+| TC-ORD-04 | Product Not Found | Invalid Product ID in items | `items: [{_id: "invalid_id"}]` | `400 Bad Request`, "Product not found" |
+| TC-ORD-05 | Multiple Items Order | Multiple valid products | `items: [P1, P2]` | `201 Created`, Both stocks reduced |
+
+## 4. User Management Module (`/users`)
+
+| ID | Test Scenario | Equivalence Class | Input | Expected Result |
+|---|---|---|---|---|
+| TC-USER-01 | Fetch All Users | N/A | `GET /users` | `200 OK`, Array of users |
+| TC-USER-02 | Update User Role | Valid role (admin/member) | `{role: "admin"}` | `200 OK`, Role updated |
+| TC-USER-03 | Delete Admin User | Existing Admin ID | `DELETE /users/:id` | `200 OK`, "User removed" |
+| TC-USER-04 | Update Status | Valid status enum | `{status: "inactive"}` | `200 OK`, Status updated |
 
 ---
 
-## 2. Test Scripts (Sample using Postman/Newman or Javascript)
-
-### 2.1 Sample script for TC-01 (Login)
-```javascript
-// Example using a tool like Postman
-pm.test("Status code is 200", function () {
-    pm.response.to.have.status(200);
-});
-
-pm.test("Token is present", function () {
-    var jsonData = pm.response.json();
-    pm.expect(jsonData).to.have.property('token');
-});
-```
-
-### 2.2 Sample script for TC-03 (Invalid Product)
-```javascript
-pm.test("Status code is 400", function () {
-    pm.response.to.have.status(400);
-});
-```
-
----
-
-## 3. Test Flow (API Sequence)
-
-The typical flow for testing the inventory system:
-
-```mermaid
-graph TD
-    A[Start] --> B[POST /auth/register]
-    B --> C[POST /auth/login]
-    C --> D[GET /products]
-    D --> E[POST /products - Create Dummy]
-    E --> F[POST /orders - Place Order]
-    F --> G[GET /orders/:id - Verify Order]
-    G --> H[UPDATE /products - Verify Stock Change]
-    H --> I[End]
-```
-
-1.  **Authentication Flow**: Register a new user followed by a Login to get the JWT token (mocked).
-2.  **Inventory Setup**: List products, then add a new product.
-3.  **Transaction Flow**: Place an order using the created product.
-4.  **Verification**: Retrieve the order details and check if the stock of the product was reduced (noting: current logic doesn't auto-decrement stock, this is a test point for future implementation).
-5.  **Cleanup**: Delete the test product and user.
+## Summary of Testing Methods Used:
+1. **Positive Testing**: TC-AUTH-01, TC-PROD-01, TC-ORD-01
+2. **Negative Testing**: TC-AUTH-02, TC-PROD-03, TC-ORD-03
+3. **Equivalence Partitioning**: Grouping inputs like "Valid Price" vs "Negative Price".
+4. **Integration Testing**: TC-ORD-01 (Verifies connection between Order and Product Stock).

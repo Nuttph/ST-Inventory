@@ -1,6 +1,7 @@
 const Order = require('../models/Order');
 const OrderDetail = require('../models/OrderDetail');
 const Payment = require('../models/Payment');
+const Product = require('../models/Product');
 
 const getOrders = async (req, res) => {
     try {
@@ -17,7 +18,24 @@ const createOrder = async (req, res) => {
     try {
         const { orderId, user, customer, amount, status, paymentMethod, items } = req.body;
 
-        // 1. Create Order
+        // 1. Stock Validation and Reduction
+        if (items && items.length > 0) {
+            for (const item of items) {
+                const product = await Product.findById(item._id);
+                if (!product) {
+                    throw new Error(`Product ${item.name} not found`);
+                }
+                if (product.stock < item.quantity) {
+                    throw new Error(`Insufficient stock for ${item.name}. Available: ${product.stock}`);
+                }
+
+                // Reduce stock
+                product.stock -= item.quantity;
+                await product.save();
+            }
+        }
+
+        // 2. Create Order
         const order = new Order({
             orderId,
             user,
@@ -28,7 +46,7 @@ const createOrder = async (req, res) => {
         });
         const savedOrder = await order.save();
 
-        // 2. Create OrderDetails
+        // 3. Create OrderDetails
         if (items && items.length > 0) {
             const detailPromises = items.map(item => {
                 return new OrderDetail({
@@ -43,7 +61,7 @@ const createOrder = async (req, res) => {
             await Promise.all(detailPromises);
         }
 
-        // 3. Create Payment
+        // 4. Create Payment
         const payment = new Payment({
             order: savedOrder._id,
             amount: amount,
@@ -53,7 +71,7 @@ const createOrder = async (req, res) => {
         });
         const savedPayment = await payment.save();
 
-        // 4. Update Order with Payment Reference
+        // 5. Update Order with Payment Reference
         savedOrder.payment = savedPayment._id;
         await savedOrder.save();
 

@@ -108,7 +108,10 @@ This document describes the API endpoints available in the ST-Inventory system.
 
 ### 3.3 Create Order
 - **Endpoint:** `POST /orders`
-- **Description:** Place a new order.
+- **Description:** Place a new order. **Note: This action automatically validates and reduces the product stock.**
+- **Business Logic:**
+  - If any item in the request has a `quantity` greater than its available `stock`, the request will fail with `400 Bad Request`.
+  - Upon success, the product's `stock` will be decremented by the ordered `quantity`.
 - **Request Body:**
 ```json
 {
@@ -117,7 +120,7 @@ This document describes the API endpoints available in the ST-Inventory system.
   "customer": "Customer Name",
   "amount": 500,
   "status": "pending",
-  "paymentMethod": "qr" | "card" | "cod",
+  "paymentMethod": "qr",
   "items": [
     {
       "_id": "product_id",
@@ -129,7 +132,8 @@ This document describes the API endpoints available in the ST-Inventory system.
 }
 ```
 - **Expected Result:**
-  - `201 Created`: Returns the created order with payment details.
+  - `201 Created`: Returns the created order with payment details and updated stock.
+  - `400 Bad Request`: "Insufficient stock for [Product Name]" or validation error.
 
 ### 3.4 Update Order
 - **Endpoint:** `PUT /orders/:id`

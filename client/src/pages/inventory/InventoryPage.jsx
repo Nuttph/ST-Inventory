@@ -35,6 +35,8 @@ const InventoryPage = () => {
     const [restockItem, setRestockItem] = useState(null);
     const [restockAmount, setRestockAmount] = useState(0);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [selectedProductId, setSelectedProductId] = useState(null);
     const [newProduct, setNewProduct] = useState({
         name: '',
         price: '',
@@ -81,20 +83,57 @@ const InventoryPage = () => {
                 price: parseFloat(newProduct.price),
                 stock: parseInt(newProduct.stock)
             };
-            await productApi.createProduct(productData);
+
+            if (isEditMode) {
+                await productApi.updateProduct(selectedProductId, productData);
+            } else {
+                await productApi.createProduct(productData);
+            }
+
             await fetchItems();
-            setIsAddDialogOpen(false);
-            setNewProduct({
-                name: '',
-                price: '',
-                stock: '',
-                category: '',
-                image: ''
-            });
+            handleCloseDialog();
         } catch (error) {
-            console.error('Error adding product:', error);
-            alert('Failed to add product. Please try again.');
+            console.error('Error saving product:', error);
+            alert('Failed to save product. Please try again.');
         }
+    };
+
+    const handleDeleteProduct = async (id) => {
+        if (window.confirm('Are you sure you want to delete this product?')) {
+            try {
+                await productApi.deleteProduct(id);
+                await fetchItems();
+            } catch (error) {
+                console.error('Error deleting product:', error);
+                alert('Failed to delete product.');
+            }
+        }
+    };
+
+    const handleEditClick = (product) => {
+        setNewProduct({
+            name: product.name,
+            price: product.price,
+            stock: product.stock,
+            category: product.category,
+            image: product.image || ''
+        });
+        setSelectedProductId(product._id);
+        setIsEditMode(true);
+        setIsAddDialogOpen(true);
+    };
+
+    const handleCloseDialog = () => {
+        setIsAddDialogOpen(false);
+        setIsEditMode(false);
+        setSelectedProductId(null);
+        setNewProduct({
+            name: '',
+            price: '',
+            stock: '',
+            category: '',
+            image: ''
+        });
     };
 
     const getStockStatus = (stock, minStock) => {
@@ -115,7 +154,10 @@ const InventoryPage = () => {
                     variant="contained"
                     startIcon={<Plus size={20} />}
                     className="bg-primary-600 rounded-xl px-6 py-2.5 font-bold shadow-lg shadow-primary-100"
-                    onClick={() => setIsAddDialogOpen(true)}
+                    onClick={() => {
+                        setIsEditMode(false);
+                        setIsAddDialogOpen(true);
+                    }}
                 >
                     Add New Product
                 </Button>
@@ -215,15 +257,33 @@ const InventoryPage = () => {
                                                 </span>
                                             </TableCell>
                                             <TableCell align="right">
-                                                <Button
-                                                    variant="text"
-                                                    size="small"
-                                                    className="text-primary-600 font-bold hover:bg-primary-50 px-4 py-1.5 rounded-lg"
-                                                    onClick={() => setRestockItem(item)}
-                                                    startIcon={<RefreshCcw size={16} />}
-                                                >
-                                                    Restock
-                                                </Button>
+                                                <div className="flex justify-end gap-2">
+                                                    <Button
+                                                        variant="text"
+                                                        size="small"
+                                                        className="text-primary-600 font-bold hover:bg-primary-50 px-3 py-1.5 rounded-lg"
+                                                        onClick={() => setRestockItem(item)}
+                                                        startIcon={<RefreshCcw size={16} />}
+                                                    >
+                                                        Restock
+                                                    </Button>
+                                                    <Button
+                                                        variant="text"
+                                                        size="small"
+                                                        className="text-amber-600 font-bold hover:bg-amber-50 px-3 py-1.5 rounded-lg"
+                                                        onClick={() => handleEditClick(item)}
+                                                    >
+                                                        Edit
+                                                    </Button>
+                                                    <Button
+                                                        variant="text"
+                                                        size="small"
+                                                        className="text-red-600 font-bold hover:bg-red-50 px-3 py-1.5 rounded-lg"
+                                                        onClick={() => handleDeleteProduct(item._id)}
+                                                    >
+                                                        Delete
+                                                    </Button>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     );
@@ -272,14 +332,14 @@ const InventoryPage = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* Add Product Dialog */}
+            {/* Add/Edit Product Dialog */}
             <Dialog
                 open={isAddDialogOpen}
-                onClose={() => setIsAddDialogOpen(false)}
+                onClose={handleCloseDialog}
                 PaperProps={{ className: 'rounded-3xl p-2 w-full max-w-md' }}
             >
                 <DialogTitle className="font-bold text-slate-800">
-                    Add New Product
+                    {isEditMode ? 'Edit Product' : 'Add New Product'}
                 </DialogTitle>
                 <DialogContent>
                     <div className="flex flex-col gap-4 mt-2">
@@ -330,13 +390,13 @@ const InventoryPage = () => {
                     </div>
                 </DialogContent>
                 <DialogActions className="p-6">
-                    <Button onClick={() => setIsAddDialogOpen(false)} className="text-slate-400 font-bold">Cancel</Button>
+                    <Button onClick={handleCloseDialog} className="text-slate-400 font-bold">Cancel</Button>
                     <Button
                         onClick={handleAddProduct}
                         variant="contained"
                         className="bg-primary-600 rounded-xl px-8 font-bold shadow-lg shadow-primary-100"
                     >
-                        Add Product
+                        {isEditMode ? 'Update Product' : 'Add Product'}
                     </Button>
                 </DialogActions>
             </Dialog>

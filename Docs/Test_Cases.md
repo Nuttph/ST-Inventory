@@ -12,6 +12,8 @@ This document outlines the testing strategy for the API endpoints.
 | TC-04 | Product | Get all products | N/A | `200 OK`, list of products | High |
 | TC-05 | Order | Create order with valid data | Valid order object | `201 Created`, Order + Payment | High |
 | TC-06 | User | Update user role to 'admin' | `{role: "admin"}` | `200 OK`, updated role | Medium |
+| TC-07 | Product | Update product details | `{price: 150}` | `200 OK`, product updated | Medium |
+| TC-08 | Product | Delete product existing ID | N/A | `200 OK`, message: "removed" | High |
 
 ---
 

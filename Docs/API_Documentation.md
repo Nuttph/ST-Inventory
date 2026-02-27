@@ -69,16 +69,24 @@ This document describes the API endpoints available in the ST-Inventory system.
 ### 2.3 Update Product
 - **Endpoint:** `PUT /products/:id`
 - **Description:** Update an existing product.
-- **Request Body:** Fields to update (e.g., `price`, `stock`).
+- **Request Body:**
+```json
+{
+  "name": "Updated Name",
+  "price": 120,
+  "stock": 45,
+  "category": "Electronics"
+}
+```
 - **Expected Result:**
-  - `200 OK`: Returns the updated product.
+  - `200 OK`: Returns the updated product object.
   - `404 Not Found`: Product ID doesn't exist.
 
 ### 2.4 Delete Product
 - **Endpoint:** `DELETE /products/:id`
-- **Description:** Remove a product from the inventory.
+- **Description:** Remove a product from the inventory permanently.
 - **Expected Result:**
-  - `200 OK`: Success message.
+  - `200 OK`: `{"message": "Product removed"}`
   - `404 Not Found`: Product ID doesn't exist.
 
 ---

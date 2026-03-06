@@ -1,0 +1,11 @@
+Category,Tool/Technology,Version,Description
+"Frontend","React","^19.2.0","Web Library for building UI"
+"Frontend","Vite","^7.3.1","Next Generation Frontend Tooling"
+"Frontend","Material UI","^7.3.8","React UI Component Library"
+"Frontend","React Router DOM","^7.13.1","Routing library for React"
+"Backend","Express","^5.2.1","Web Framework for Node.js"
+"Backend","Node.js Server Side","v22.14.0","JavaScript Runtime Environment"
+"Database","MongoDB (Mongoose)","^9.2.1","ODM for MongoDB & Node.js"
+"Package Manager","npm","Current System Version","Package Installer and Manager"
+"Development","Nodemon","^3.1.14","Auto-restart node application on changes"
+"Environment","ST-Inventory Environment","1.0.0","Software Testing Project Workspace"
